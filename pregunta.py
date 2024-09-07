@@ -11,10 +11,32 @@ import pandas as pd
 
 def clean_data():
 
-    df = pd.read_csv("solicitudes_credito.csv", sep=";")
+    df = pd.read_csv("solicitudes_credito.csv", sep=";", index_col=0)
 
     #
     # Inserte su código aquí
     #
+    df = df.replace("-", " ", regex=True).replace("_", " ", regex=True)
+    df = df.map(lambda x: x.lower() if isinstance(x, str) else x)
+
+    df["monto_del_credito"] = (
+        df["monto_del_credito"]
+        .str.strip(" ")
+        .str.replace("[,$]|(\.00$)", "", regex=True)
+        .astype(float)
+    )
+
+    df["fecha_de_beneficio"] = pd.to_datetime(
+        df["fecha_de_beneficio"], format="%d/%m/%Y", errors="coerce"
+    ).fillna(
+        pd.to_datetime(df["fecha_de_beneficio"], format="%Y/%m/%d", errors="coerce")
+    )
+
+    df["comuna_ciudadano"] = df["comuna_ciudadano"].astype(int)
+
+    df = df.drop_duplicates().dropna()
 
     return df
+
+
+clean_data()
